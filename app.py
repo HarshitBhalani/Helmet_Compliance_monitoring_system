@@ -110,12 +110,12 @@ def main():
         except Exception as e:
             st.error(f"Error accessing directory: {str(e)}")
         
-        st.markdown("""
-        **🔧 Fix Steps:**
-        1. Ensure your model.h5 file is in the same folder as app.py
-        2. File should be named exactly model.h5
-        3. Restart the Streamlit app after placing the file
-        """)
+        # Fix Steps section - using proper string formatting
+        st.markdown("**🔧 Fix Steps:**")
+        st.markdown("1. Ensure your model.h5 file is in the same folder as app.py")
+        st.markdown("2. File should be named exactly model.h5")
+        st.markdown("3. Restart the Streamlit app after placing the file")
+        
         return
     
     # Success message
@@ -220,13 +220,11 @@ def main():
                         
                         # Safety alert
                         st.warning("🚨 **SAFETY VIOLATION ALERT**")
-                        st.markdown("""
-                        **Immediate Actions Required:**
-                        - 🛑 Stop work immediately
-                        - 🪖 Provide safety helmet
-                        - 📋 Brief worker on safety protocols
-                        - 📝 Document the incident
-                        """)
+                        st.markdown("**Immediate Actions Required:**")
+                        st.markdown("- 🛑 Stop work immediately")
+                        st.markdown("- 🪖 Provide safety helmet")
+                        st.markdown("- 📋 Brief worker on safety protocols")
+                        st.markdown("- 📝 Document the incident")
                     
                     st.metric("Confidence Level", f"{confidence:.1%}")
                     
@@ -433,13 +431,13 @@ def main():
     
     # Footer
     st.markdown("---")
-    st.markdown("""
+    footer_html = """
     <div style='text-align: center; color: gray;'>
         <p>🏭 <strong>Helmet Compliance Monitoring System</strong></p>
         <p>Ensuring workplace safety through AI-powered detection</p>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(footer_html, unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
-    
