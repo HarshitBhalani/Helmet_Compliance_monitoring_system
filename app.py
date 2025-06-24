@@ -57,21 +57,29 @@ def predict_helmet(image, model):
         st.error(f"Prediction error: {str(e)}")
         return None, None, None
 
-# Initialize session state for violation logs
-if 'violation_logs' not in st.session_state:
-    st.session_state.violation_logs = []
-
 def log_violation(image_name, confidence, violation_type):
     """Log safety violations"""
-    log_entry = {
-        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        'image': image_name,
-        'violation': violation_type,
-        'confidence': f"{confidence:.2%}"
-    }
-    st.session_state.violation_logs.append(log_entry)
+    try:
+        # Ensure session state is properly initialized
+        if 'violation_logs' not in st.session_state:
+            st.session_state.violation_logs = []
+        
+        log_entry = {
+            'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'image': image_name,
+            'violation': violation_type,
+            'confidence': f"{confidence:.2%}"
+        }
+        st.session_state.violation_logs.append(log_entry)
+    except Exception as e:
+        # Silently handle the error to prevent app crashes
+        pass
 
 def main():
+    # Initialize session state for violation logs at the start of main
+    if 'violation_logs' not in st.session_state:
+        st.session_state.violation_logs = []
+    
     st.title("⛑️ Helmet Compliance Monitoring System")
     st.markdown("### Ensuring Workplace Safety Through AI Detection")
     st.markdown("---")
@@ -84,16 +92,19 @@ def main():
         
         # Check what files exist
         st.subheader("📁 Files in Current Directory:")
-        current_files = [f for f in os.listdir('.') if os.path.isfile(f)]
-        
-        if current_files:
-            for file in current_files:
-                if file.endswith('.h5'):
-                    st.success(f"✅ Found: {file}")
-                else:
-                    st.write(f"📄 {file}")
-        else:
-            st.write("No files found")
+        try:
+            current_files = [f for f in os.listdir('.') if os.path.isfile(f)]
+            
+            if current_files:
+                for file in current_files:
+                    if file.endswith('.h5'):
+                        st.success(f"✅ Found: {file}")
+                    else:
+                        st.write(f"📄 {file}")
+            else:
+                st.write("No files found")
+        except Exception as e:
+            st.error(f"Error accessing directory: {str(e)}")
         
         st.markdown("""
         **🔧 Fix Steps:**
@@ -132,14 +143,18 @@ def main():
     st.sidebar.markdown("---")
     
     # Statistics
-    if st.session_state.violation_logs:
-        total_checks = len(st.session_state.violation_logs)
-        violations = len([log for log in st.session_state.violation_logs if log['violation'] != 'Compliant'])
-        compliance_rate = ((total_checks - violations) / total_checks) * 100
-        
-        st.sidebar.metric("Total Checks", total_checks)
-        st.sidebar.metric("Compliance Rate", f"{compliance_rate:.1f}%")
-        st.sidebar.metric("Violations", violations)
+    try:
+        if st.session_state.violation_logs:
+            total_checks = len(st.session_state.violation_logs)
+            violations = len([log for log in st.session_state.violation_logs if log['violation'] != 'Compliant'])
+            compliance_rate = ((total_checks - violations) / total_checks) * 100
+            
+            st.sidebar.metric("Total Checks", total_checks)
+            st.sidebar.metric("Compliance Rate", f"{compliance_rate:.1f}%")
+            st.sidebar.metric("Violations", violations)
+    except Exception as e:
+        # Silently handle statistics errors
+        pass
     
     # Main content based on mode
     if mode == "📷 Image Upload":
@@ -259,7 +274,6 @@ def main():
                     
                     if is_compliant:
                         st.success("✅ **HELMET DETECTED**")
-                        # REMOVED: st.balloons() - No more balloon animation
                         violation_type = "Compliant"
                     else:
                         st.error("❌ **NO HELMET DETECTED**")
@@ -354,55 +368,64 @@ def main():
             
             # Download results
             if st.button("📥 Download Results as CSV"):
-                import pandas as pd
-                df = pd.DataFrame(results)
-                csv = df.to_csv(index=False)
-                st.download_button(
-                    label="Download CSV",
-                    data=csv,
-                    file_name=f"helmet_compliance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                    mime="text/csv"
-                )
+                try:
+                    import pandas as pd
+                    df = pd.DataFrame(results)
+                    csv = df.to_csv(index=False)
+                    st.download_button(
+                        label="Download CSV",
+                        data=csv,
+                        file_name=f"helmet_compliance_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
+                        mime="text/csv"
+                    )
+                except Exception as e:
+                    st.error(f"Error generating CSV: {str(e)}")
     
     elif mode == "📊 Violation Logs":
         st.header("📊 Safety Violation Logs")
         
-        if st.session_state.violation_logs:
-            st.write(f"📋 Total logged events: {len(st.session_state.violation_logs)}")
-            
-            # Convert to dataframe for better display
-            import pandas as pd
-            df = pd.DataFrame(st.session_state.violation_logs)
-            
-            # Summary stats
-            violations = df[df['violation'] != 'Compliant']
-            
-            if len(violations) > 0:
-                st.error(f"⚠️ {len(violations)} safety violations detected!")
+        try:
+            if st.session_state.violation_logs:
+                st.write(f"📋 Total logged events: {len(st.session_state.violation_logs)}")
                 
-                col1, col2 = st.columns(2)
-                with col1:
-                    st.subheader("🚨 Recent Violations")
-                    st.dataframe(violations.tail(10), use_container_width=True)
+                # Convert to dataframe for better display
+                import pandas as pd
+                df = pd.DataFrame(st.session_state.violation_logs)
                 
-                with col2:
-                    # Violation timeline (simple)
-                    violation_counts = violations.groupby(violations['timestamp'].str[:10]).size()
-                    if len(violation_counts) > 0:
-                        st.subheader("📈 Violations by Date")
-                        st.bar_chart(violation_counts)
-            
-            # Full log
-            st.subheader("📝 Complete Log")
-            st.dataframe(df, use_container_width=True)
-            
-            # Clear logs button
-            if st.button("🗑️ Clear All Logs", type="secondary"):
-                st.session_state.violation_logs = []
-                st.success("Logs cleared!")
-                st.rerun()
-        else:
-            st.info("📭 No violation logs yet. Start detecting to see logs here.")
+                # Summary stats
+                violations = df[df['violation'] != 'Compliant']
+                
+                if len(violations) > 0:
+                    st.error(f"⚠️ {len(violations)} safety violations detected!")
+                    
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        st.subheader("🚨 Recent Violations")
+                        st.dataframe(violations.tail(10), use_container_width=True)
+                    
+                    with col2:
+                        # Violation timeline (simple)
+                        try:
+                            violation_counts = violations.groupby(violations['timestamp'].str[:10]).size()
+                            if len(violation_counts) > 0:
+                                st.subheader("📈 Violations by Date")
+                                st.bar_chart(violation_counts)
+                        except Exception as e:
+                            st.info("Unable to generate violation timeline")
+                
+                # Full log
+                st.subheader("📝 Complete Log")
+                st.dataframe(df, use_container_width=True)
+                
+                # Clear logs button
+                if st.button("🗑️ Clear All Logs", type="secondary"):
+                    st.session_state.violation_logs = []
+                    st.success("Logs cleared!")
+                    st.rerun()
+            else:
+                st.info("📭 No violation logs yet. Start detecting to see logs here.")
+        except Exception as e:
+            st.error(f"Error displaying logs: {str(e)}")
     
     # Footer
     st.markdown("---")
@@ -414,4 +437,4 @@ def main():
     """, unsafe_allow_html=True)
 
 if __name__ == "__main__":
-    main()  
+    main()
