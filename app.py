@@ -77,7 +77,11 @@ def log_violation(image_name, confidence, violation_type):
 
 def main():
     # Initialize session state for violation logs at the start of main
-    if 'violation_logs' not in st.session_state:
+    try:
+        if 'violation_logs' not in st.session_state:
+            st.session_state.violation_logs = []
+    except Exception:
+        # Fallback initialization
         st.session_state.violation_logs = []
     
     st.title("⛑️ Helmet Compliance Monitoring System")
@@ -108,8 +112,8 @@ def main():
         
         st.markdown("""
         **🔧 Fix Steps:**
-        1. Ensure your `model.h5` file is in the same folder as `app.py`
-        2. File should be named exactly `model.h5`
+        1. Ensure your model.h5 file is in the same folder as app.py
+        2. File should be named exactly model.h5
         3. Restart the Streamlit app after placing the file
         """)
         return
@@ -438,3 +442,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    
