@@ -95,12 +95,12 @@
             else:
                 st.write("No files found")
             
-            #st.markdown("""
-             #            **🔧 Fix Steps:**
-              #          1. Ensure your `model.h5` file is in the same folder as `app.py`
-               #         2. File should be named exactly `model.h5`
-                #        3. Restart the Streamlit app after placing the file
-                 #       """)
+           st.markdown("""
+**🔧 Fix Steps:**
+1. Ensure your `model.h5` file is in the same folder as `app.py`
+2. File should be named exactly `model.h5`
+3. Restart the Streamlit app after placing the file
+""")
             return
         
         # Success message
